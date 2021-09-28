@@ -10,15 +10,16 @@
   export let box: Box;
 
   let isDragging = false;
+  let boxPositionOnDragStart: Point;
   let dragStartPoint: Point = { x: 0, y: 0 };
-  let diff: Point = { x: 0, y: 0 };
 
   function beginDrag(event: MouseEvent) {
     if (!isDragging && event.buttons === 1) {
       isDragging = true;
+      boxPositionOnDragStart = box;
       dragStartPoint = screenToSVG(svg, $scale, {
-        x: event.screenX,
-        y: event.screenY,
+        x: event.clientX,
+        y: event.clientY,
       });
     }
   }
@@ -26,21 +27,20 @@
   function updateDrag(event: MouseEvent): void {
     if (!isDragging) return;
 
-    const d = screenToSVG(svg, $scale, { x: event.screenX, y: event.screenY });
+    const mousePos = screenToSVG(svg, $scale, {
+      x: event.clientX,
+      y: event.clientY,
+    });
 
-    diff = {
-      x: d.x - dragStartPoint.x,
-      y: d.y - dragStartPoint.y,
-    };
+    dispatch("move", {
+      x: mousePos.x - (dragStartPoint.x - boxPositionOnDragStart.x),
+      y: mousePos.y - (dragStartPoint.y - boxPositionOnDragStart.y),
+    });
   }
 
   function endDrag(_event: MouseEvent): void {
     if (isDragging) {
       isDragging = false;
-
-      dispatch("move", { x: box.x + diff.x, y: box.y + diff.y });
-
-      diff = { x: 0, y: 0 };
     }
   }
 </script>
@@ -57,7 +57,6 @@
   width={box.width}
   height={box.height}
   rx="15"
-  transform="translate({diff.x}, {diff.y})"
   class="box"
 />
 

@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Box, Point } from "./model";
 
-  import Post from "./Box.svelte";
+  import BoxView from "./Box.svelte";
   import { scale } from "./store";
+  import Arrow from "./Arrow.svelte";
 
   let boxes: Box[] = [
     { x: 50, y: 50, width: 100, height: 150 },
@@ -14,8 +15,8 @@
   let windowWidth = window.innerWidth;
   let windowHeight = window.innerHeight;
 
-  let translateX = 20;
-  let translateY = 20;
+  let translateX = 0;
+  let translateY = 0;
 
   function translateBox(idx: number, to: Point): void {
     boxes[idx] = {
@@ -52,7 +53,7 @@
 
 <svelte:window use:onWheel on:resize={updateWindowSize} />
 
-<div class="main">
+<main>
   <div class="svg-container">
     <svg
       bind:this={svg}
@@ -75,18 +76,28 @@
 
         {#if svg}
           <g>
+            {#if boxes.length >= 2}
+              <Arrow from={boxes[0]} to={boxes[1]} />
+            {/if}
+          </g>
+
+          <g>
             {#each boxes as box, idx}
-              <Post {svg} {box} on:move={(e) => translateBox(idx, e.detail)} />
+              <BoxView
+                {svg}
+                {box}
+                on:move={(e) => translateBox(idx, e.detail)}
+              />
             {/each}
           </g>
         {/if}
       </g>
     </svg>
   </div>
-</div>
+</main>
 
 <style>
-  .main {
+  main {
     width: 100%;
     height: 100%;
 
