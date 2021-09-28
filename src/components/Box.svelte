@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { screenToSVG } from "./utils";
-  import { scale } from "./store";
-  import type { Point, Node } from "./model";
+  import { screenToSVG } from "../utils";
+  import { scale } from "../store";
+  import type { Point, Node } from "../model";
 
   const dispatch = createEventDispatcher<{ move: Point; createNewBox: void }>();
 

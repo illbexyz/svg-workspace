@@ -1,10 +1,9 @@
 <script lang="ts">
-  import type { Node, Edge, Point } from "./model";
-
-  import Box from "./Box.svelte";
-  import { scale } from "./store";
-  import Arrow from "./Arrow.svelte";
+  import type { Node, Edge, Point } from "../model";
   import { spring } from "svelte/motion";
+  import { scale } from "../store";
+  import Box from "./Box.svelte";
+  import Arrow from "./Arrow.svelte";
 
   const heights = spring(100);
 
@@ -34,7 +33,7 @@
       const aboveCount = boxes.filter(
         (b2) => b.id !== b2.id && b2.y + b.height < b.y
       ).length;
-      console.log(aboveCount);
+
       return { ...b, height: h, y: b.y + (h - b.height) * aboveCount };
     });
   });

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Node, Point } from "./model";
+  import type { Node, Point } from "../model";
   export let from: Node;
   export let to: Node;
 
