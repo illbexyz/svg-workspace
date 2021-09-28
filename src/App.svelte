@@ -2,11 +2,14 @@
   import type { Point } from "./point";
 
   import Post from "./Post.svelte";
+  import { scale } from "./store";
 
   let postPos = { x: 0, y: 0 };
   let svg: SVGSVGElement;
 
-  let scale = 1;
+  let windowWidth = window.innerWidth;
+  let windowHeight = window.innerHeight;
+
   let translateX = 20;
   let translateY = 20;
 
@@ -14,39 +17,46 @@
     postPos = detail;
   }
 
-  function wheel(event: WheelEvent): void {
+  function scaleOrTranslate(event: WheelEvent): void {
     if (event.ctrlKey) {
       event.preventDefault();
-      scale -= event.deltaY * 0.0005;
+      $scale -= event.deltaY * 0.0005;
     } else {
       translateY -= event.deltaY;
     }
   }
 
-  function wheelw(node: HTMLElement) {
-    node.addEventListener("wheel", wheel, { passive: false });
+  function updateWindowSize() {
+    windowWidth = window.innerWidth;
+    windowHeight = window.innerHeight;
+  }
+
+  function onWheel(node: HTMLElement) {
+    node.addEventListener("wheel", scaleOrTranslate, { passive: false });
 
     return {
       destroy() {
-        node.removeEventListener("wheel", wheel);
+        node.removeEventListener("wheel", scaleOrTranslate);
       },
     };
   }
 </script>
 
-<svelte:window use:wheelw />
+<svelte:window use:onWheel on:resize={updateWindowSize} />
 
 <div class="main">
   <div class="svg-container">
     <svg
       bind:this={svg}
       preserveAspectRatio="none"
-      width="1920px"
-      height="1080px"
-      viewBox="0 0 1920 1080"
+      width="{windowWidth}px"
+      height="{windowHeight}px"
+      viewBox="0 0 {windowWidth} {windowHeight}"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g transform="matrix({scale}, 0, 0, {scale}, {translateX}, {translateY})">
+      <g
+        transform="matrix({$scale}, 0, 0, {$scale}, {translateX}, {translateY})"
+      >
         <rect
           x="-100000"
           y="-100000"

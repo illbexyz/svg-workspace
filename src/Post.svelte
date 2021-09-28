@@ -2,6 +2,7 @@
   import { createEventDispatcher } from "svelte";
   import type { Point } from "./point";
   import { screenToSVG } from "./utils";
+  import { scale } from "./store";
 
   const dispatch = createEventDispatcher<{ move: Point }>();
 
@@ -16,14 +17,17 @@
   function beginDrag(event: MouseEvent) {
     if (!isDragging && event.buttons === 1) {
       isDragging = true;
-      dragStartPoint = screenToSVG(svg, { x: event.screenX, y: event.screenY });
+      dragStartPoint = screenToSVG(svg, $scale, {
+        x: event.screenX,
+        y: event.screenY,
+      });
     }
   }
 
   function updateDrag(event: MouseEvent): void {
     if (!isDragging) return;
 
-    const d = screenToSVG(svg, { x: event.screenX, y: event.screenY });
+    const d = screenToSVG(svg, $scale, { x: event.screenX, y: event.screenY });
 
     diff = {
       x: d.x - dragStartPoint.x,
