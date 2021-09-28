@@ -1,13 +1,23 @@
 <script lang="ts">
-  import type { Box, Point } from "./model";
+  import type { Node, Edge, Point } from "./model";
 
-  import BoxView from "./Box.svelte";
+  import Box from "./Box.svelte";
   import { scale } from "./store";
   import Arrow from "./Arrow.svelte";
+  import { spring } from "svelte/motion";
 
-  let boxes: Box[] = [
-    { x: 50, y: 50, width: 100, height: 150 },
-    { x: 200, y: 250, width: 100, height: 150 },
+  const heights = spring(100);
+
+  let boxes: Node[] = [
+    { id: 0, x: 50, y: 50, width: 100, height: $heights },
+    { id: 1, x: 50, y: 250, width: 100, height: $heights },
+  ];
+
+  let edges: Edge[] = [
+    {
+      from: 0,
+      to: 1,
+    },
   ];
 
   let svg: SVGSVGElement;
@@ -17,6 +27,51 @@
 
   let translateX = 0;
   let translateY = 0;
+  let isCompact = true;
+
+  heights.subscribe((h) => {
+    boxes = boxes.map((b) => {
+      const aboveCount = boxes.filter(
+        (b2) => b.id !== b2.id && b2.y + b.height < b.y
+      ).length;
+      console.log(aboveCount);
+      return { ...b, height: h, y: b.y + (h - b.height) * aboveCount };
+    });
+  });
+
+  function createNewBox(from: Node): void {
+    const id = boxes.length;
+    const newBox = {
+      id,
+      width: from.width,
+      height: from.height,
+      x: from.x,
+      y: from.y + from.height + 100,
+    };
+
+    while (checkIntersection(newBox)) {
+      newBox.x += 70;
+    }
+
+    boxes.push(newBox);
+    boxes = boxes;
+
+    edges.push({
+      from: from.id,
+      to: id,
+    });
+  }
+
+  function checkIntersection(box: Node): boolean {
+    return boxes.some((b) => {
+      const leftX = Math.max(box.x, b.x);
+      const rightX = Math.min(box.x + box.width, b.x + b.width);
+      const topY = Math.max(box.y, b.y);
+      const bottomY = Math.min(box.y + box.height, b.y + b.height);
+
+      return leftX < rightX && topY < bottomY;
+    });
+  }
 
   function translateBox(idx: number, to: Point): void {
     boxes[idx] = {
@@ -54,6 +109,14 @@
 <svelte:window use:onWheel on:resize={updateWindowSize} />
 
 <main>
+  <button
+    class="compact-btn"
+    on:click={() => {
+      isCompact = !isCompact;
+      heights.set(isCompact ? 100 : 150);
+    }}>{isCompact ? "Expand" : "Compact"}</button
+  >
+
   <div class="svg-container">
     <svg
       bind:this={svg}
@@ -71,22 +134,23 @@
           y="-100000"
           width="200000"
           height="200000"
-          fill="white"
+          fill="var(--background)"
         />
 
         {#if svg}
           <g>
-            {#if boxes.length >= 2}
-              <Arrow from={boxes[0]} to={boxes[1]} />
-            {/if}
+            {#each edges as edge}
+              <Arrow from={boxes[edge.from]} to={boxes[edge.to]} />
+            {/each}
           </g>
 
           <g>
             {#each boxes as box, idx}
-              <BoxView
+              <Box
                 {svg}
                 {box}
                 on:move={(e) => translateBox(idx, e.detail)}
+                on:createNewBox={() => createNewBox(box)}
               />
             {/each}
           </g>
@@ -110,5 +174,11 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
+
+  .compact-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
   }
 </style>

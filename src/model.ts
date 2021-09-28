@@ -3,9 +3,15 @@ export interface Point {
   y: number;
 }
 
-export interface Box {
+export interface Node {
+  id: number;
   width: number;
   height: number;
   x: number;
   y: number;
+}
+
+export interface Edge {
+  from: number;
+  to: number;
 }
