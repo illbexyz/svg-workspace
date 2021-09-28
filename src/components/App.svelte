@@ -4,6 +4,7 @@
   import { scale } from "../store";
   import Box from "./Box.svelte";
   import Arrow from "./Arrow.svelte";
+  import { screenToSVG } from "../utils";
 
   const heights = spring(100);
 
@@ -24,9 +25,11 @@
   let windowWidth = window.innerWidth;
   let windowHeight = window.innerHeight;
 
-  let translateX = 0;
-  let translateY = 0;
+  let translate: Point = { x: 0, y: 0 };
   let isCompact = true;
+  let isPanning = false;
+  let panningStartPos: Point;
+  let panningDelta: Point = { x: 0, y: 0 };
 
   heights.subscribe((h) => {
     boxes = boxes.map((b) => {
@@ -85,7 +88,10 @@
       event.preventDefault();
       $scale -= event.deltaY * 0.0005;
     } else {
-      translateY -= event.deltaY;
+      translate = {
+        x: translate.x,
+        y: translate.y - event.deltaY,
+      };
     }
   }
 
@@ -94,18 +100,51 @@
     windowHeight = window.innerHeight;
   }
 
-  function onWheel(node: HTMLElement) {
-    node.addEventListener("wheel", scaleOrTranslate, { passive: false });
+  function handleMouseDown(event: MouseEvent): void {
+    if (event.button === 1) {
+      isPanning = true;
+      panningStartPos = screenToSVG(svg, $scale, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+    }
+  }
 
-    return {
-      destroy() {
-        node.removeEventListener("wheel", scaleOrTranslate);
-      },
-    };
+  function handleMouseUp(event: MouseEvent): void {
+    if (event.button === 1) {
+      isPanning = false;
+
+      translate = {
+        x: translate.x + panningDelta.x,
+        y: translate.y + panningDelta.y,
+      };
+
+      panningDelta = { x: 0, y: 0 };
+    }
+  }
+
+  function handleMouseMove(event: MouseEvent): void {
+    if (isPanning) {
+      const mousePos = screenToSVG(svg, $scale, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      panningDelta = {
+        x: mousePos.x - panningStartPos.x,
+        y: mousePos.y - panningStartPos.y,
+      };
+    }
   }
 </script>
 
-<svelte:window use:onWheel on:resize={updateWindowSize} />
+<svelte:window
+  on:wheel|nonpassive={scaleOrTranslate}
+  on:resize={updateWindowSize}
+  on:mousemove={handleMouseMove}
+  on:mouseleave={handleMouseUp}
+  on:mouseup={handleMouseUp}
+/>
 
 <main>
   <button
@@ -116,7 +155,11 @@
     }}>{isCompact ? "Expand" : "Compact"}</button
   >
 
-  <div class="svg-container">
+  <div
+    class="svg-container"
+    class:svg-container--panning={isPanning}
+    on:mousedown={handleMouseDown}
+  >
     <svg
       bind:this={svg}
       preserveAspectRatio="none"
@@ -126,7 +169,8 @@
       xmlns="http://www.w3.org/2000/svg"
     >
       <g
-        transform="matrix({$scale}, 0, 0, {$scale}, {translateX}, {translateY})"
+        transform="matrix({$scale}, 0, 0, {$scale}, {translate.x +
+          panningDelta.x}, {translate.y + panningDelta.y})"
       >
         <rect
           x="-100000"
@@ -173,6 +217,10 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
+
+  .svg-container--panning {
+    cursor: move;
   }
 
   .compact-btn {

@@ -49,10 +49,11 @@
   }
 </script>
 
-<svelte:body
+<svelte:window
   on:mousemove={updateDrag}
   on:mouseleave={endDrag}
-  on:mouseup={endDrag} />
+  on:mouseup={endDrag}
+/>
 
 <g>
   <rect
