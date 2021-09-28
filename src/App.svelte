@@ -1,10 +1,14 @@
 <script lang="ts">
-  import type { Point } from "./point";
+  import type { Box, Point } from "./model";
 
-  import Post from "./Post.svelte";
+  import Post from "./Box.svelte";
   import { scale } from "./store";
 
-  let postPos = { x: 0, y: 0 };
+  let boxes: Box[] = [
+    { x: 50, y: 50, width: 100, height: 150 },
+    { x: 200, y: 250, width: 100, height: 150 },
+  ];
+
   let svg: SVGSVGElement;
 
   let windowWidth = window.innerWidth;
@@ -13,8 +17,12 @@
   let translateX = 20;
   let translateY = 20;
 
-  function move({ detail }: CustomEvent<Point>): void {
-    postPos = detail;
+  function translateBox(idx: number, to: Point): void {
+    boxes[idx] = {
+      ...boxes[idx],
+      x: to.x,
+      y: to.y,
+    };
   }
 
   function scaleOrTranslate(event: WheelEvent): void {
@@ -67,7 +75,9 @@
 
         {#if svg}
           <g>
-            <Post {svg} x={postPos.x} y={postPos.y} on:move={move} />
+            {#each boxes as box, idx}
+              <Post {svg} {box} on:move={(e) => translateBox(idx, e.detail)} />
+            {/each}
           </g>
         {/if}
       </g>

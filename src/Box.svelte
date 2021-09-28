@@ -1,14 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import type { Point } from "./point";
   import { screenToSVG } from "./utils";
   import { scale } from "./store";
+  import type { Point, Box } from "./model";
 
   const dispatch = createEventDispatcher<{ move: Point }>();
 
   export let svg: SVGSVGElement;
-  export let x: number;
-  export let y: number;
+  export let box: Box;
 
   let isDragging = false;
   let dragStartPoint: Point = { x: 0, y: 0 };
@@ -39,7 +38,7 @@
     if (isDragging) {
       isDragging = false;
 
-      dispatch("move", { x: x + diff.x, y: y + diff.y });
+      dispatch("move", { x: box.x + diff.x, y: box.y + diff.y });
 
       diff = { x: 0, y: 0 };
     }
@@ -53,21 +52,21 @@
 
 <rect
   on:mousedown={beginDrag}
-  {x}
-  {y}
-  width="100"
-  height="100"
+  x={box.x}
+  y={box.y}
+  width={box.width}
+  height={box.height}
   rx="15"
   transform="translate({diff.x}, {diff.y})"
-  class="post"
+  class="box"
 />
 
 <style>
-  .post {
+  .box {
     fill: #6cce6c;
   }
 
-  .post:hover {
+  .box:hover {
     stroke: black;
     stroke-width: 1px;
   }
